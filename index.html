@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mind Dump Pro</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: white;
+}
+
+/* Container */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px;
+  text-align: center;
+}
+
+/* Title */
+h1 {
+  font-size: 2.8rem;
+  background: linear-gradient(90deg, #22c55e, #38bdf8);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+/* Input */
+textarea {
+  width: 100%;
+  height: 140px;
+  border-radius: 15px;
+  border: none;
+  padding: 15px;
+  font-size: 16px;
+  outline: none;
+  background: #020617;
+  color: white;
+}
+
+/* Category */
+select {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  border: none;
+}
+
+/* Buttons */
+button {
+  padding: 10px 18px;
+  margin: 8px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.save { background: #22c55e; }
+.clear { background: #f59e0b; }
+
+/* Search */
+input {
+  margin-top: 20px;
+  padding: 10px;
+  width: 60%;
+  border-radius: 10px;
+  border: none;
+}
+
+/* Idea cards */
+.idea-box {
+  background: #020617;
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 12px;
+  text-align: left;
+  transition: 0.3s;
+}
+
+.idea-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(56,189,248,0.3);
+}
+
+.time {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.category {
+  font-size: 12px;
+  color: #38bdf8;
+}
+
+.delete { background: #ef4444; }
+.edit { background: #3b82f6; }
+
+/* Stats */
+.stats {
+  margin-top: 15px;
+  color: #22c55e;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🧠 Mind Dump Pro</h1>
+  <p class="subtitle">Write it. Save it. Forget it.</p>
+
+  <textarea id="idea" placeholder="What's on your mind..."></textarea><br>
+
+  <select id="category">
+    <option>Idea</option>
+    <option>Stress</option>
+    <option>Goal</option>
+  </select><br>
+
+  <button class="save" onclick="saveIdea()">Save</button>
+  <button class="clear" onclick="clearMind()">Clear</button>
+
+  <div class="stats" id="stats"></div>
+
+  <input type="text" id="search" placeholder="Search thoughts..." onkeyup="displayIdeas()">
+
+  <div id="ideasList"></div>
+
+</div>
+
+<script>
+
+window.onload = displayIdeas;
+
+function saveIdea() {
+  let text = document.getElementById("idea").value.trim();
+  let category = document.getElementById("category").value;
+
+  if(text === "") return;
+
+  let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+
+  ideas.unshift({
+    text,
+    category,
+    time: new Date().toLocaleString()
+  });
+
+  localStorage.setItem("ideas", JSON.stringify(ideas));
+
+  document.getElementById("idea").value = "";
+  displayIdeas();
+}
+
+function displayIdeas() {
+  let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+  let search = document.getElementById("search").value.toLowerCase();
+
+  let container = document.getElementById("ideasList");
+  container.innerHTML = "";
+
+  let filtered = ideas.filter(i => i.text.toLowerCase().includes(search));
+
+  document.getElementById("stats").innerText = 
+    "Total Thoughts: " + filtered.length;
+
+  filtered.forEach((idea, index) => {
+    let div = document.createElement("div");
+    div.className = "idea-box";
+
+    div.innerHTML = `
+      <p contenteditable="false" id="text-${index}">${idea.text}</p>
+      <div class="category">${idea.category}</div>
+      <div class="time">${idea.time}</div>
+      <button class="edit" onclick="editIdea(${index})">Edit</button>
+      <button class="delete" onclick="deleteIdea(${index})">Delete</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function deleteIdea(index) {
+  let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+  ideas.splice(index, 1);
+  localStorage.setItem("ideas", JSON.stringify(ideas));
+  displayIdeas();
+}
+
+function editIdea(index) {
+  let textEl = document.getElementById("text-" + index);
+
+  if(textEl.isContentEditable) {
+    textEl.contentEditable = false;
+
+    let ideas = JSON.parse(localStorage.getItem("ideas"));
+    ideas[index].text = textEl.innerText;
+    localStorage.setItem("ideas", JSON.stringify(ideas));
+  } else {
+    textEl.contentEditable = true;
+    textEl.focus();
+  }
+}
+
+function clearMind() {
+  document.getElementById("idea").value = "";
+}
+
+</script>
+
+</body>
+</html>
